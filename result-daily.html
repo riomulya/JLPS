@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎉 Daily Quiz Results | 日本語マスター</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .result-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .score-hero {
+      text-align: center;
+      padding: 60px 30px;
+      margin-bottom: 40px;
+      background: linear-gradient(135deg, var(--secondary), #2a9d8f);
+      border-radius: 40px;
+      color: white;
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+
+    .score-hero h1,
+    .score-hero p {
+      color: white;
+    }
+
+    .score-badge {
+      font-size: 5rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 15px;
+      display: block;
+    }
+
+    .score-label {
+      font-size: 1.2rem;
+      font-weight: 600;
+      opacity: 0.9;
+    }
+
+    .review-item {
+      padding: 25px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+      border-left: 8px solid #eee;
+      background: white;
+      transition: var(--transition);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+      position: relative;
+    }
+
+    .item-correct {
+      border-left-color: var(--success);
+    }
+
+    .item-incorrect {
+      border-left-color: var(--primary);
+    }
+
+    .level-badge-mini {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 50px;
+      background: var(--light);
+      color: var(--secondary);
+    }
+
+    .ans-block {
+      padding: 15px;
+      border-radius: 12px;
+      margin-top: 10px;
+      font-size: 1rem;
+    }
+
+    .your-ans {
+      background: var(--light);
+      border: 1px solid #e0e0e0;
+    }
+
+    .correct-ans {
+      background: rgba(42, 157, 143, 0.05);
+      border: 1px solid rgba(42, 157, 143, 0.2);
+      margin-top: 8px;
+    }
+
+    .explanation {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px dashed #eee;
+      color: var(--text-light);
+      font-style: italic;
+      font-size: 0.95rem;
+    }
+
+    .action-buttons {
+      margin-top: 50px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding-bottom: 50px;
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar animate-fade">
+    <div class="logo">日本語マスター</div>
+  </nav>
+
+  <div class="container animate-fade result-container">
+    <div class="score-hero">
+      <h1>Daily Challenge Result</h1>
+      <span class="score-badge" id="scoreDisplay">--</span>
+      <p class="score-label">out of 100 points</p>
+      <div class="feedback-text mt-4" id="feedback" style="font-size: 2rem; font-weight: 800;">Processing...</div>
+    </div>
+
+    <div class="review-section">
+      <h3 class="mb-4">Challenge Review (100 Questions)</h3>
+      <div id="reviewContainer"></div>
+    </div>
+
+    <div class="action-buttons">
+      <a href="index.html" class="btn btn-outline" style="min-width: 250px;">
+        🏠 Return to Dashboard
+      </a>
+    </div>
+  </div>
+
+  <script src="js/quiz-data.js"></script>
+  <script>
+    window.onload = function () {
+      const urlParams = new URLSearchParams(window.location.search);
+
+      const allQuestions = [];
+      Object.keys(window.quizQuestions).forEach(level => {
+        window.quizQuestions[level].forEach(q => {
+          allQuestions.push({ ...q, level });
+        });
+      });
+
+      // Same shuffle logic for consistency
+      for (let i = allQuestions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
+      }
+      const shuffledQuestions = allQuestions.slice(0, 100);
+
+      let correctCount = 0;
+      const reviewContainer = document.getElementById('reviewContainer');
+
+      shuffledQuestions.forEach((q, index) => {
+        const userAnswerIndex = parseInt(urlParams.get(`q${index}`));
+        const isCorrect = userAnswerIndex === q.correct;
+        if (isCorrect) correctCount++;
+
+        const item = document.createElement('div');
+        item.className = `review-item animate-slide ${isCorrect ? 'item-correct' : 'item-incorrect'}`;
+        item.style.animationDelay = `${index * 0.02}s`;
+
+        const userAnswerText = userAnswerIndex === -1 ? "No answer" : q.options[userAnswerIndex] || "No answer";
+        const correctAnswerText = q.options[q.correct];
+
+        item.innerHTML = `
+          <span class="level-badge-mini">${q.level}</span>
+          <div class="q-header">
+             <strong style="color: var(--secondary)">Q${index + 1}: ${q.question}</strong>
+          </div>
+          <div class="ans-block your-ans">
+            <strong>Your Choice:</strong> ${userAnswerText}
+          </div>
+          ${!isCorrect ? `
+          <div class="ans-block correct-ans">
+            <strong>Correct Answer:</strong> ${correctAnswerText}
+          </div>
+          ` : ''}
+          <div class="explanation">
+            <strong>Explanation:</strong> ${q.explanation}
+          </div>
+        `;
+        reviewContainer.appendChild(item);
+      });
+
+      document.getElementById('scoreDisplay').textContent = correctCount;
+      const feedback = document.getElementById('feedback');
+      if (correctCount >= 90) feedback.textContent = "🏆 Daily Grandmaster!";
+      else if (correctCount >= 70) feedback.textContent = "🔥 Advanced Learner!";
+      else if (correctCount >= 40) feedback.textContent = "✅ On the Right Track!";
+      else feedback.textContent = "📚 Keep at it!";
+    };
+  </script>
+</body>
+
+</html>

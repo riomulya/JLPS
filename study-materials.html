@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>日本語マスター | Study Materials</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .materials-hero {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 700;
+      margin-bottom: 20px;
+      transition: var(--transition);
+    }
+
+    .back-link:hover {
+      color: var(--primary);
+      transform: translateX(-5px);
+    }
+
+    .file-grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .file-item {
+      background: var(--white);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 25px;
+      border-radius: 20px;
+      border: 1px solid #eee;
+      transition: var(--transition);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    }
+
+    .file-item:hover {
+      border-color: var(--primary);
+      transform: scale(1.02);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .file-icon {
+      width: 50px;
+      height: 50px;
+      background: var(--light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      font-size: 1.5rem;
+    }
+
+    .file-details h3 {
+      font-size: 1.1rem;
+      color: var(--secondary);
+      margin-bottom: 2px;
+    }
+
+    .file-details span {
+      font-size: 0.85rem;
+      color: var(--text-light);
+    }
+
+    .download-btn {
+      background: var(--secondary);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: var(--transition);
+    }
+
+    .download-btn:hover {
+      background: var(--primary);
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar animate-fade">
+    <div class="logo">日本語マスター</div>
+    <div class="user-info">
+      <span class="username">Learner</span>
+      <span class="streak">🔥 1-day streak</span>
+    </div>
+  </nav>
+
+  <div class="container animate-fade">
+    <a href="index.html" class="back-link">← Back to Dashboard</a>
+
+    <header class="materials-hero">
+      <h1 id="pageTitle">Study Materials</h1>
+      <p>Expertly curated PDFs to help you conquer the JLPT exam.</p>
+    </header>
+
+    <div class="card file-grid">
+      <!-- Grammar -->
+      <div class="file-item animate-slide">
+        <div class="file-info">
+          <div class="file-icon">📚</div>
+          <div class="file-details">
+            <h3 id="grammarTitle">Grammar Guide</h3>
+            <span>PDF Document • High Quality</span>
+          </div>
+        </div>
+        <button class="download-btn" id="grammarBtn">Download</button>
+      </div>
+
+      <!-- Kanji -->
+      <div class="file-item animate-slide" style="animation-delay: 0.1s">
+        <div class="file-info">
+          <div class="file-icon">✍️</div>
+          <div class="file-details">
+            <h3 id="kanjiTitle">Kanji List</h3>
+            <span>PDF Document • stroke orders</span>
+          </div>
+        </div>
+        <button class="download-btn" id="kanjiBtn">Download</button>
+      </div>
+
+      <!-- Vocabulary -->
+      <div class="file-item animate-slide" style="animation-delay: 0.2s">
+        <div class="file-info">
+          <div class="file-icon">📖</div>
+          <div class="file-details">
+            <h3 id="vocabTitle">Vocabulary</h3>
+            <span>PDF Document • Contextual usage</span>
+          </div>
+        </div>
+        <button class="download-btn" id="vocabBtn">Download</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Get level from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const level = urlParams.get('level') || 'N5';
+
+    // Set default username
+    const usernameEl = document.querySelector('.navbar .user-info .username');
+    if (usernameEl) {
+      usernameEl.textContent = 'Learner';
+    }
+
+    // Update page content
+    document.getElementById('pageTitle').textContent = `${level} Study Materials`;
+    document.getElementById('grammarTitle').textContent = `${level} Grammar Guide`;
+    document.getElementById('kanjiTitle').textContent = `${level} Kanji List`;
+    document.getElementById('vocabTitle').textContent = `${level} Vocabulary`;
+
+    // Set download paths
+    document.getElementById('grammarBtn').onclick = () => downloadFile(`pdfs/${level}-Grammar.pdf`);
+    document.getElementById('kanjiBtn').onclick = () => downloadFile(`pdfs/${level}-Kanji.pdf`);
+    document.getElementById('vocabBtn').onclick = () => downloadFile(`pdfs/${level}-Vocabulary.pdf`);
+
+    function downloadFile(path) {
+      const link = document.createElement('a');
+      link.href = path;
+      link.download = path.split('/').pop(); // Extract filename
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+
+</html>

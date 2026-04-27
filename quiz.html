@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📝 JLPT Quiz | 日本語マスター</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .quiz-layout {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .quiz-header-ui {
+      background: var(--glass);
+      padding: 25px;
+      border-radius: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      box-shadow: var(--shadow);
+    }
+
+    .timer-badge {
+      background: var(--primary);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .start-screen-card {
+      text-align: center;
+      padding: 60px 40px;
+    }
+
+    .start-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+    }
+
+    .question-box {
+      margin-bottom: 30px;
+    }
+
+    .q-number {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    .q-text {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--secondary);
+      margin-bottom: 25px;
+    }
+
+    .options-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .option-btn {
+      background: white;
+      border: 2px solid #eee;
+      padding: 18px 25px;
+      border-radius: 16px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 1.1rem;
+      font-weight: 500;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .option-btn:hover {
+      border-color: var(--accent);
+      background: var(--light);
+    }
+
+    .option-btn.selected {
+      border-color: var(--primary);
+      background: rgba(230, 57, 70, 0.05);
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .opt-char {
+      width: 30px;
+      height: 30px;
+      background: var(--light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--secondary);
+    }
+
+    .option-btn.selected .opt-char {
+      background: var(--primary);
+      color: white;
+    }
+
+    .submit-bar {
+      position: sticky;
+      bottom: 20px;
+      background: var(--glass);
+      backdrop-filter: blur(15px);
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+      margin-top: 50px;
+      display: flex;
+      justify-content: center;
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar animate-fade">
+    <div class="logo">日本語マスター</div>
+    <div class="user-info">
+      <span class="username">Learner</span>
+    </div>
+  </nav>
+
+  <div class="container animate-fade">
+    <div class="quiz-layout">
+      <header class="quiz-header-ui">
+        <div>
+          <h2 style="margin:0">JLPT Level Quiz</h2>
+          <select id="levelSelect" class="mt-2" style="padding: 8px 15px; border-radius: 10px;">
+            <option value="N5">Level: N5</option>
+            <option value="N4">Level: N4</option>
+            <option value="N3">Level: N3</option>
+            <option value="N2">Level: N2</option>
+            <option value="N1">Level: N1</option>
+          </select>
+        </div>
+        <div id="timer" class="timer-badge" style="display:none;">
+          ⏱️ 00:00
+        </div>
+      </header>
+
+      <!-- Start Screen -->
+      <div id="startScreen" class="card start-screen-card animate-fade">
+        <div class="start-icon">🎌</div>
+        <h2>Ready to Begin?</h2>
+        <p>The quiz will test your grammar, vocabulary, and kanji knowledge. All questions are shuffled for a better
+          learning experience.</p>
+        <button class="btn btn-primary btn-lg mt-4" onclick="startQuiz()" style="padding: 16px 50px;">
+          Start Quiz Now
+        </button>
+      </div>
+
+      <!-- Questions -->
+      <div id="quizContainer" style="display:none;">
+        <!-- Questions will load here -->
+      </div>
+
+      <div id="submitBtnContainer" class="submit-bar animate-fade" style="display:none;">
+        <button class="btn btn-primary" onclick="submitQuiz()"
+          style="width: 100%; max-width: 400px; font-size: 1.2rem;">
+          Finish & See Results
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/quiz-data.js"></script>
+  <script>
+    let currentLevel = 'N5';
+    let userAnswers = {};
+    let shuffledQuestions = null;
+    let startTime = null;
+    let timerInterval = null;
+
+    // Fisher-Yates Shuffle
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function updateTimer() {
+      const now = new Date().getTime();
+      const elapsed = now - startTime;
+      const mins = Math.floor(elapsed / 60000);
+      const secs = Math.floor((elapsed % 60000) / 1000);
+      document.getElementById('timer').textContent = `⏱️ ${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function startQuiz() {
+      currentLevel = document.getElementById('levelSelect').value;
+      const questions = window.quizQuestions[currentLevel] || window.quizQuestions.N5;
+      shuffledQuestions = shuffleArray(questions);
+
+      document.getElementById('startScreen').style.display = 'none';
+      document.getElementById('quizContainer').style.display = 'block';
+      document.getElementById('submitBtnContainer').style.display = 'flex';
+      document.getElementById('timer').style.display = 'inline-flex';
+
+      startTime = new Date().getTime();
+      timerInterval = setInterval(updateTimer, 1000);
+      renderQuiz();
+    }
+
+    function renderQuiz() {
+      const container = document.getElementById('quizContainer');
+      container.innerHTML = '';
+
+      shuffledQuestions.forEach((q, index) => {
+        const qDiv = document.createElement('div');
+        qDiv.className = 'card question-box animate-slide';
+        qDiv.style.animationDelay = `${index * 0.05}s`;
+
+        const optionsHtml = q.options.map((opt, i) => {
+          const isSelected = userAnswers[`${currentLevel}-${index}`] === i;
+          return `
+            <div class="option-btn ${isSelected ? 'selected' : ''}" onclick="selectAnswer(${index}, ${i})">
+              <div class="opt-char">${String.fromCharCode(65 + i)}</div>
+              <span>${opt}</span>
+            </div>
+          `;
+        }).join('');
+
+        qDiv.innerHTML = `
+          <span class="q-number">Question ${index + 1}</span>
+          <p class="q-text">${q.question}</p>
+          <div class="options-grid">${optionsHtml}</div>
+        `;
+        container.appendChild(qDiv);
+      });
+    }
+
+    function selectAnswer(qIndex, ansIndex) {
+      userAnswers[`${currentLevel}-${qIndex}`] = ansIndex;
+      renderQuiz();
+    }
+
+    function submitQuiz() {
+      clearInterval(timerInterval);
+      const endTime = new Date().getTime();
+      const totalTime = Math.floor((endTime - startTime) / 1000);
+      const mins = Math.floor(totalTime / 60);
+      const secs = totalTime % 60;
+
+      const form = document.createElement('form');
+      form.method = 'GET';
+      form.action = 'result.html';
+
+      shuffledQuestions.forEach((q, i) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = `q${i}`;
+        input.value = userAnswers[`${currentLevel}-${i}`] !== undefined ? userAnswers[`${currentLevel}-${i}`] : '-1';
+        form.appendChild(input);
+      });
+
+      const levelInput = document.createElement('input');
+      levelInput.type = 'hidden';
+      levelInput.name = 'level';
+      levelInput.value = currentLevel;
+      form.appendChild(levelInput);
+
+      const timeInput = document.createElement('input');
+      timeInput.type = 'hidden';
+      timeInput.name = 'time';
+      timeInput.value = `${mins}m ${secs}s`;
+      form.appendChild(timeInput);
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+
+    window.onload = function () {
+      const usernameEl = document.querySelector('.navbar .user-info .username');
+      if (usernameEl) usernameEl.textContent = 'Learner';
+      document.getElementById('levelSelect').value = 'N5';
+    };
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎉 Quiz Results | 日本語マスター</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .result-container {
+      max-width: 850px;
+      margin: 0 auto;
+    }
+
+    .score-hero {
+      text-align: center;
+      padding: 50px 30px;
+      margin-bottom: 40px;
+      background: var(--glass);
+      border-radius: 30px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .score-circle {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 25px;
+      color: white;
+      box-shadow: 0 10px 30px rgba(230, 57, 70, 0.3);
+      animation: scaleUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes scaleUp {
+      from {
+        transform: scale(0.5);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .score-num {
+      font-size: 2.5rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .score-total {
+      font-size: 1rem;
+      opacity: 0.8;
+      font-weight: 500;
+    }
+
+    .feedback-text {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--secondary);
+      margin-bottom: 10px;
+    }
+
+    .time-taken {
+      font-size: 1.1rem;
+      color: var(--text-light);
+    }
+
+    .review-section {
+      margin-top: 40px;
+    }
+
+    .review-item {
+      padding: 25px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+      border-left: 8px solid #eee;
+      background: white;
+      transition: var(--transition);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    }
+
+    .item-correct {
+      border-left-color: var(--success);
+    }
+
+    .item-incorrect {
+      border-left-color: var(--primary);
+    }
+
+    .q-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .q-status {
+      padding: 4px 12px;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .status-correct {
+      background: rgba(42, 157, 143, 0.1);
+      color: var(--success);
+    }
+
+    .status-incorrect {
+      background: rgba(230, 57, 70, 0.1);
+      color: var(--primary);
+    }
+
+    .ans-block {
+      padding: 15px;
+      border-radius: 12px;
+      margin-top: 10px;
+      font-size: 1rem;
+    }
+
+    .your-ans {
+      background: var(--light);
+      border: 1px solid #e0e0e0;
+    }
+
+    .correct-ans {
+      background: rgba(42, 157, 143, 0.05);
+      border: 1px solid rgba(42, 157, 143, 0.2);
+      margin-top: 8px;
+    }
+
+    .explanation {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px dashed #eee;
+      color: var(--text-light);
+      font-style: italic;
+      font-size: 0.95rem;
+    }
+
+    .action-buttons {
+      margin-top: 50px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding-bottom: 50px;
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar animate-fade">
+    <div class="logo">日本語マスター</div>
+  </nav>
+
+  <div class="container animate-fade result-container">
+    <div class="score-hero">
+      <div class="score-circle">
+        <span class="score-num" id="scoreDisplay">--</span>
+        <span class="score-total" id="totalQuestions">out of --</span>
+      </div>
+      <div class="feedback-text" id="feedback">Reviewing...</div>
+      <div class="time-taken">⏱️ Completed in <span id="timeTaken">--</span></div>
+      <div class="mt-4">
+        <span class="badge" id="levelBadge" style="background: var(--light); color: var(--accent);">Level: --</span>
+      </div>
+    </div>
+
+    <div class="review-section">
+      <h3>Detailed Review</h3>
+      <div id="reviewContainer"></div>
+    </div>
+
+    <div class="action-buttons">
+      <a href="index.html" class="btn btn-outline" style="min-width: 200px;">
+        🏠 Home
+      </a>
+      <button onclick="window.print()" class="btn btn-primary" style="min-width: 200px;">
+        📄 Save Result
+      </button>
+    </div>
+  </div>
+
+  <script src="js/quiz-data.js"></script>
+  <script>
+    window.onload = function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      const level = urlParams.get('level') || 'N5';
+      const questions = window.quizQuestions[level] || window.quizQuestions.N5;
+      const total = questions.length;
+      const time = urlParams.get('time') || '--';
+
+      document.getElementById('totalQuestions').textContent = `out of ${total}`;
+      document.getElementById('timeTaken').textContent = time;
+      document.getElementById('levelBadge').textContent = `Level: ${level}`;
+
+      let correctCount = 0;
+      const reviewContainer = document.getElementById('reviewContainer');
+
+      questions.forEach((q, index) => {
+        const userAnswerIndex = parseInt(urlParams.get(`q${index}`));
+        const isCorrect = userAnswerIndex === q.correct;
+        if (isCorrect) correctCount++;
+
+        const item = document.createElement('div');
+        item.className = `review-item animate-slide ${isCorrect ? 'item-correct' : 'item-incorrect'}`;
+        item.style.animationDelay = `${index * 0.05}s`;
+
+        const userAnswerText = userAnswerIndex === -1 ? "No answer" : q.options[userAnswerIndex] || "No answer";
+        const correctAnswerText = q.options[q.correct];
+
+        item.innerHTML = `
+          <div class="q-header">
+            <span class="q-status ${isCorrect ? 'status-correct' : 'status-incorrect'}">
+                ${isCorrect ? '✓ Correct' : '✗ Incorrect'}
+            </span>
+            <strong style="color: var(--secondary)">Q${index + 1}: ${q.question}</strong>
+          </div>
+          <div class="ans-block your-ans">
+            <strong>Your Choice:</strong> ${userAnswerText}
+          </div>
+          ${!isCorrect ? `
+          <div class="ans-block correct-ans">
+            <strong>Correct Answer:</strong> ${correctAnswerText}
+          </div>
+          ` : ''}
+          <div class="explanation">
+            <strong>Key takeaway:</strong> ${q.explanation}
+          </div>
+        `;
+        reviewContainer.appendChild(item);
+      });
+
+      document.getElementById('scoreDisplay').textContent = correctCount;
+      const feedback = document.getElementById('feedback');
+      const scorePercent = (correctCount / total) * 100;
+
+      if (scorePercent >= 90) feedback.textContent = "🌸 Perfect Mastery!";
+      else if (scorePercent >= 75) feedback.textContent = "🔥 Amazing Performance!";
+      else if (scorePercent >= 50) feedback.textContent = "📚 Good Progress!";
+      else feedback.textContent = "🎌 Keep Practicing!";
+    };
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📅 Daily Quiz | 日本語マスター</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .daily-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .progress-bar-fixed {
+      position: sticky;
+      top: 80px;
+      z-index: 900;
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      padding: 15px 25px;
+      border-radius: 20px;
+      margin-bottom: 30px;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow);
+    }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .progress-label {
+      font-weight: 800;
+      color: var(--secondary);
+      font-size: 0.9rem;
+    }
+
+    .progress-track-premium {
+      height: 12px;
+      background: #eee;
+      border-radius: 50px;
+      overflow: hidden;
+    }
+
+    .progress-fill-premium {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), #2a9d8f);
+      width: 0%;
+      transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .question-box {
+      margin-bottom: 30px;
+      position: relative;
+    }
+
+    .level-tag {
+      position: absolute;
+      top: 25px;
+      right: 25px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+
+    .n5 {
+      background: #457b9d;
+    }
+
+    .n4 {
+      background: #e9c46a;
+    }
+
+    .n3 {
+      background: #e76f51;
+    }
+
+    .n2 {
+      background: #9c6644;
+    }
+
+    .n1 {
+      background: #9437ff;
+    }
+
+    .q-text {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--secondary);
+      margin-bottom: 25px;
+    }
+
+    .options-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .option-btn {
+      background: white;
+      border: 2px solid #eee;
+      padding: 18px 25px;
+      border-radius: 16px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 1.1rem;
+      font-weight: 500;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .option-btn:hover {
+      border-color: var(--accent);
+      background: var(--light);
+    }
+
+    .option-btn.selected {
+      border-color: var(--primary);
+      background: rgba(230, 57, 70, 0.05);
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .opt-char {
+      width: 30px;
+      height: 30px;
+      background: var(--light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--secondary);
+    }
+
+    .option-btn.selected .opt-char {
+      background: var(--primary);
+      color: white;
+    }
+
+    .submit-bar {
+      position: sticky;
+      bottom: 20px;
+      background: var(--glass);
+      backdrop-filter: blur(15px);
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+      margin-top: 50px;
+      display: flex;
+      justify-content: center;
+      z-index: 1000;
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar animate-fade">
+    <div class="logo">日本語マスター</div>
+    <div class="user-info">
+      <span class="username">Learner</span>
+    </div>
+  </nav>
+
+  <div class="container animate-fade" style="max-width: 900px;">
+    <header class="daily-header">
+      <h1>📅 Daily Challenge</h1>
+      <p>A mix of 100 questions from all JLPT levels. Let's see your true mastery!</p>
+    </header>
+
+    <div class="progress-bar-fixed">
+      <div class="progress-info">
+        <span class="progress-label">Challenge Progress</span>
+        <span class="progress-label" id="progressText">0 / 100 Answered</span>
+      </div>
+      <div class="progress-track-premium">
+        <div class="progress-fill-premium" id="progressFill"></div>
+      </div>
+    </div>
+
+    <div id="quizContainer">
+      <!-- Questions loaded by JS -->
+    </div>
+
+    <div class="submit-bar">
+      <button class="btn btn-primary" onclick="submitQuiz()" style="width: 100%; max-width: 450px; font-size: 1.2rem;">
+        Submit Daily Challenge
+      </button>
+    </div>
+  </div>
+
+  <script src="js/quiz-data.js"></script>
+  <script>
+    const TOTAL_QUESTIONS = 100;
+    let userAnswers = {};
+    let shuffledQuestions = [];
+
+    window.onload = function () {
+      const usernameEl = document.querySelector('.navbar .user-info .username');
+      if (usernameEl) usernameEl.textContent = 'Learner';
+
+      loadAndShuffleQuestions();
+      renderQuiz();
+      updateProgress();
+    };
+
+    function loadAndShuffleQuestions() {
+      const allQuestions = [];
+      Object.keys(window.quizQuestions).forEach(level => {
+        window.quizQuestions[level].forEach(q => {
+          allQuestions.push({ ...q, level });
+        });
+      });
+
+      for (let i = allQuestions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
+      }
+
+      shuffledQuestions = allQuestions.slice(0, TOTAL_QUESTIONS);
+    }
+
+    function renderQuiz() {
+      const container = document.getElementById('quizContainer');
+      container.innerHTML = '';
+
+      shuffledQuestions.forEach((q, index) => {
+        const qDiv = document.createElement('div');
+        qDiv.className = 'card question-box animate-slide';
+        qDiv.style.animationDelay = `${index * 0.02}s`;
+
+        const optionsHtml = q.options.map((opt, i) => {
+          const isSelected = userAnswers[index] === i;
+          return `
+            <div class="option-btn ${isSelected ? 'selected' : ''}" onclick="selectAnswer(${index}, ${i})">
+              <div class="opt-char">${String.fromCharCode(65 + i)}</div>
+              <span>${opt}</span>
+            </div>
+          `;
+        }).join('');
+
+        qDiv.innerHTML = `
+          <div class="level-tag ${q.level.toLowerCase()}">${q.level}</div>
+          <p class="q-text">${q.question}</p>
+          <div class="options-grid">${optionsHtml}</div>
+        `;
+
+        container.appendChild(qDiv);
+      });
+    }
+
+    function selectAnswer(qIndex, ansIndex) {
+      userAnswers[qIndex] = ansIndex;
+      updateProgress();
+      renderQuiz();
+    }
+
+    function updateProgress() {
+      const filled = Object.keys(userAnswers).length;
+      const percent = (filled / TOTAL_QUESTIONS) * 100;
+      document.getElementById('progressFill').style.width = percent + '%';
+      document.getElementById('progressText').textContent = `${filled} / ${TOTAL_QUESTIONS} Answered`;
+    }
+
+    function submitQuiz() {
+      const form = document.createElement('form');
+      form.method = 'GET';
+      form.action = 'result-daily.html';
+
+      shuffledQuestions.forEach((q, i) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = `q${i}`;
+        input.value = userAnswers[i] !== undefined ? userAnswers[i] : '-1';
+        form.appendChild(input);
+      });
+
+      const typeInput = document.createElement('input');
+      typeInput.type = 'hidden';
+      typeInput.name = 'type';
+      typeInput.value = 'daily';
+      form.appendChild(typeInput);
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+  </script>
+</body>
+
+</html>
